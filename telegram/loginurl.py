@@ -2,7 +2,7 @@
 # pylint: disable=R0903
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 """This module contains an object that represents a Telegram LoginUrl."""
+from typing import Any
+
 from telegram import TelegramObject
 
 
@@ -27,15 +29,15 @@ class LoginUrl(TelegramObject):
     coming from Telegram. All the user needs to do is tap/click a button and confirm that they want
     to log in. Telegram apps support these buttons as of version 5.7.
 
-    Sample bot: `@discussbot <https://t.me/dicussbot>`_
+    Sample bot: `@discussbot <https://t.me/discussbot>`_
 
-    Attributes:
-        url (:obj:`str`): An HTTP URL to be opened with user authorization data.
-        forward_text (:obj:`str`): Optional. New text of the button in forwarded messages.
-        bot_username (:obj:`str`): Optional. Username of a bot, which will be used for user
-            authorization.
-        request_write_access (:obj:`bool`): Optional. Pass :obj:`True` to request the permission
-            for your bot to send messages to the user.
+    Objects of this class are comparable in terms of equality. Two objects of this class are
+    considered equal, if their :attr:`url` is equal.
+
+    Note:
+        You must always check the hash of the received data to verify the authentication
+        and the integrity of the data as described in
+        `Checking authorization <https://core.telegram.org/widgets/login#checking-authorization>`_
 
     Args:
         url (:obj:`str`): An HTTP URL to be opened with user authorization data added to the query
@@ -57,13 +59,26 @@ class LoginUrl(TelegramObject):
         request_write_access (:obj:`bool`, optional): Pass :obj:`True` to request the permission
             for your bot to send messages to the user.
 
-    Note:
-        You must always check the hash of the received data to verify the authentication
-        and the integrity of the data as described in
-        `Checking authorization <https://core.telegram.org/widgets/login#checking-authorization>`_
+    Attributes:
+        url (:obj:`str`): An HTTP URL to be opened with user authorization data.
+        forward_text (:obj:`str`): Optional. New text of the button in forwarded messages.
+        bot_username (:obj:`str`): Optional. Username of a bot, which will be used for user
+            authorization.
+        request_write_access (:obj:`bool`): Optional. Pass :obj:`True` to request the permission
+            for your bot to send messages to the user.
+
     """
 
-    def __init__(self, url, forward_text=None, bot_username=None, request_write_access=None):
+    __slots__ = ('bot_username', 'request_write_access', 'url', 'forward_text', '_id_attrs')
+
+    def __init__(
+        self,
+        url: str,
+        forward_text: bool = None,
+        bot_username: str = None,
+        request_write_access: bool = None,
+        **_kwargs: Any,
+    ):
         # Required
         self.url = url
         # Optional

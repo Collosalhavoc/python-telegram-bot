@@ -1,7 +1,7 @@
 # !/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,33 +16,37 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-import sys
+# pylint: disable=C0114
 import subprocess
+import sys
+from typing import Optional
 
 import certifi
 
-
 from . import __version__ as telegram_ver
+from .constants import BOT_API_VERSION
 
 
-def _git_revision():
+def _git_revision() -> Optional[str]:
     try:
-        output = subprocess.check_output(["git", "describe", "--long", "--tags"],
-                                         stderr=subprocess.STDOUT)
+        output = subprocess.check_output(  # skipcq: BAN-B607
+            ["git", "describe", "--long", "--tags"], stderr=subprocess.STDOUT
+        )
     except (subprocess.SubprocessError, OSError):
         return None
     return output.decode().strip()
 
 
-def print_ver_info():
+def print_ver_info() -> None:  # skipcq: PY-D0003
     git_revision = _git_revision()
-    print('python-telegram-bot {}'.format(telegram_ver) + (' ({})'.format(git_revision)
-                                                           if git_revision else ''))
-    print('certifi {}'.format(certifi.__version__))
-    print('Python {}'.format(sys.version.replace('\n', ' ')))
+    print(f'python-telegram-bot {telegram_ver}' + (f' ({git_revision})' if git_revision else ''))
+    print(f'Bot API {BOT_API_VERSION}')
+    print(f'certifi {certifi.__version__}')  # type: ignore[attr-defined]
+    sys_version = sys.version.replace('\n', ' ')
+    print(f'Python {sys_version}')
 
 
-def main():
+def main() -> None:  # skipcq: PY-D0003
     print_ver_info()
 
 

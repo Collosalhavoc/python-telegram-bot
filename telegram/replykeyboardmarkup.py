@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,18 +18,17 @@
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 """This module contains an object that represents a Telegram ReplyKeyboardMarkup."""
 
-from telegram import ReplyMarkup
+from typing import Any, List, Union, Sequence
+
+from telegram import KeyboardButton, ReplyMarkup
+from telegram.utils.types import JSONDict
 
 
 class ReplyKeyboardMarkup(ReplyMarkup):
     """This object represents a custom keyboard with reply options.
 
-    Attributes:
-        keyboard (List[List[:class:`telegram.KeyboardButton` | :obj:`str`]]): Array of button rows.
-        resize_keyboard (:obj:`bool`): Optional. Requests clients to resize the keyboard.
-        one_time_keyboard (:obj:`bool`): Optional. Requests clients to hide the keyboard as soon as
-            it's been used.
-        selective (:obj:`bool`): Optional. Show the keyboard to specific users only.
+    Objects of this class are comparable in terms of equality. Two objects of this class are
+    considered equal, if their the size of :attr:`keyboard` and all the buttons are equal.
 
     Example:
         A user requests to change the bot's language, bot replies to the request with a keyboard
@@ -49,50 +48,89 @@ class ReplyKeyboardMarkup(ReplyMarkup):
         selective (:obj:`bool`, optional): Use this parameter if you want to show the keyboard to
             specific users only. Targets:
 
-            1) Users that are @mentioned in the text of the Message object.
+            1) Users that are @mentioned in the :attr:`~telegram.Message.text` of the
+               :class:`telegram.Message` object.
             2) If the bot's message is a reply (has ``reply_to_message_id``), sender of the
                original message.
 
             Defaults to :obj:`False`.
 
+        input_field_placeholder (:obj:`str`, optional): The placeholder to be shown in the input
+            field when the keyboard is active; 1-64 characters.
+
+            .. versionadded:: 13.7
+
         **kwargs (:obj:`dict`): Arbitrary keyword arguments.
+
+    Attributes:
+        keyboard (List[List[:class:`telegram.KeyboardButton` | :obj:`str`]]): Array of button rows.
+        resize_keyboard (:obj:`bool`): Optional. Requests clients to resize the keyboard.
+        one_time_keyboard (:obj:`bool`): Optional. Requests clients to hide the keyboard as soon as
+            it's been used.
+        selective (:obj:`bool`): Optional. Show the keyboard to specific users only.
+        input_field_placeholder (:obj:`str`): Optional. The placeholder shown in the input
+            field when the reply is active.
+
+            .. versionadded:: 13.7
 
     """
 
-    def __init__(self,
-                 keyboard,
-                 resize_keyboard=False,
-                 one_time_keyboard=False,
-                 selective=False,
-                 **kwargs):
+    __slots__ = (
+        'selective',
+        'keyboard',
+        'resize_keyboard',
+        'one_time_keyboard',
+        'input_field_placeholder',
+        '_id_attrs',
+    )
+
+    def __init__(
+        self,
+        keyboard: Sequence[Sequence[Union[str, KeyboardButton]]],
+        resize_keyboard: bool = False,
+        one_time_keyboard: bool = False,
+        selective: bool = False,
+        input_field_placeholder: str = None,
+        **_kwargs: Any,
+    ):
         # Required
-        self.keyboard = keyboard
+        self.keyboard = []
+        for row in keyboard:
+            button_row = []
+            for button in row:
+                if isinstance(button, KeyboardButton):
+                    button_row.append(button)  # telegram.KeyboardButton
+                else:
+                    button_row.append(KeyboardButton(button))  # str
+            self.keyboard.append(button_row)
+
         # Optionals
         self.resize_keyboard = bool(resize_keyboard)
         self.one_time_keyboard = bool(one_time_keyboard)
         self.selective = bool(selective)
+        self.input_field_placeholder = input_field_placeholder
 
-    def to_dict(self):
+        self._id_attrs = (self.keyboard,)
+
+    def to_dict(self) -> JSONDict:
+        """See :meth:`telegram.TelegramObject.to_dict`."""
         data = super().to_dict()
 
         data['keyboard'] = []
         for row in self.keyboard:
-            r = []
-            for button in row:
-                if hasattr(button, 'to_dict'):
-                    r.append(button.to_dict())  # telegram.KeyboardButton
-                else:
-                    r.append(button)  # str
-            data['keyboard'].append(r)
+            data['keyboard'].append([button.to_dict() for button in row])
         return data
 
     @classmethod
-    def from_button(cls,
-                    button,
-                    resize_keyboard=False,
-                    one_time_keyboard=False,
-                    selective=False,
-                    **kwargs):
+    def from_button(
+        cls,
+        button: Union[KeyboardButton, str],
+        resize_keyboard: bool = False,
+        one_time_keyboard: bool = False,
+        selective: bool = False,
+        input_field_placeholder: str = None,
+        **kwargs: object,
+    ) -> 'ReplyKeyboardMarkup':
         """Shortcut for::
 
             ReplyKeyboardMarkup([[button]], **kwargs)
@@ -115,25 +153,36 @@ class ReplyKeyboardMarkup(ReplyMarkup):
                 to specific users only. Targets:
 
                 1) Users that are @mentioned in the text of the Message object.
-                2) If the bot's message is a reply (has reply_to_message_id), sender of the
-                    original message.
+                2) If the bot's message is a reply (has ``reply_to_message_id``), sender of the
+                   original message.
 
                 Defaults to :obj:`False`.
+
+            input_field_placeholder (:obj:`str`): Optional. The placeholder shown in the input
+                field when the reply is active.
+
+                .. versionadded:: 13.7
             **kwargs (:obj:`dict`): Arbitrary keyword arguments.
         """
-        return cls([[button]],
-                   resize_keyboard=resize_keyboard,
-                   one_time_keyboard=one_time_keyboard,
-                   selective=selective,
-                   **kwargs)
+        return cls(
+            [[button]],
+            resize_keyboard=resize_keyboard,
+            one_time_keyboard=one_time_keyboard,
+            selective=selective,
+            input_field_placeholder=input_field_placeholder,
+            **kwargs,
+        )
 
     @classmethod
-    def from_row(cls,
-                 button_row,
-                 resize_keyboard=False,
-                 one_time_keyboard=False,
-                 selective=False,
-                 **kwargs):
+    def from_row(
+        cls,
+        button_row: List[Union[str, KeyboardButton]],
+        resize_keyboard: bool = False,
+        one_time_keyboard: bool = False,
+        selective: bool = False,
+        input_field_placeholder: str = None,
+        **kwargs: object,
+    ) -> 'ReplyKeyboardMarkup':
         """Shortcut for::
 
             ReplyKeyboardMarkup([button_row], **kwargs)
@@ -156,26 +205,37 @@ class ReplyKeyboardMarkup(ReplyMarkup):
                 to specific users only. Targets:
 
                 1) Users that are @mentioned in the text of the Message object.
-                2) If the bot's message is a reply (has reply_to_message_id), sender of the
-                    original message.
+                2) If the bot's message is a reply (has ``reply_to_message_id``), sender of the
+                   original message.
 
                 Defaults to :obj:`False`.
+
+            input_field_placeholder (:obj:`str`): Optional. The placeholder shown in the input
+                field when the reply is active.
+
+                .. versionadded:: 13.7
             **kwargs (:obj:`dict`): Arbitrary keyword arguments.
 
         """
-        return cls([button_row],
-                   resize_keyboard=resize_keyboard,
-                   one_time_keyboard=one_time_keyboard,
-                   selective=selective,
-                   **kwargs)
+        return cls(
+            [button_row],
+            resize_keyboard=resize_keyboard,
+            one_time_keyboard=one_time_keyboard,
+            selective=selective,
+            input_field_placeholder=input_field_placeholder,
+            **kwargs,
+        )
 
     @classmethod
-    def from_column(cls,
-                    button_column,
-                    resize_keyboard=False,
-                    one_time_keyboard=False,
-                    selective=False,
-                    **kwargs):
+    def from_column(
+        cls,
+        button_column: List[Union[str, KeyboardButton]],
+        resize_keyboard: bool = False,
+        one_time_keyboard: bool = False,
+        selective: bool = False,
+        input_field_placeholder: str = None,
+        **kwargs: object,
+    ) -> 'ReplyKeyboardMarkup':
         """Shortcut for::
 
             ReplyKeyboardMarkup([[button] for button in button_column], **kwargs)
@@ -198,16 +258,34 @@ class ReplyKeyboardMarkup(ReplyMarkup):
                 to specific users only. Targets:
 
                 1) Users that are @mentioned in the text of the Message object.
-                2) If the bot's message is a reply (has reply_to_message_id), sender of the
-                    original message.
+                2) If the bot's message is a reply (has ``reply_to_message_id``), sender of the
+                   original message.
 
                 Defaults to :obj:`False`.
+
+            input_field_placeholder (:obj:`str`): Optional. The placeholder shown in the input
+                field when the reply is active.
+
+                .. versionadded:: 13.7
             **kwargs (:obj:`dict`): Arbitrary keyword arguments.
 
         """
         button_grid = [[button] for button in button_column]
-        return cls(button_grid,
-                   resize_keyboard=resize_keyboard,
-                   one_time_keyboard=one_time_keyboard,
-                   selective=selective,
-                   **kwargs)
+        return cls(
+            button_grid,
+            resize_keyboard=resize_keyboard,
+            one_time_keyboard=one_time_keyboard,
+            selective=selective,
+            input_field_placeholder=input_field_placeholder,
+            **kwargs,
+        )
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                tuple(tuple(button for button in row) for row in self.keyboard),
+                self.resize_keyboard,
+                self.one_time_keyboard,
+                self.selective,
+            )
+        )

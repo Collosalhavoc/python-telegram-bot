@@ -2,9 +2,20 @@ Credits
 =======
 
 ``python-telegram-bot`` was originally created by
-`Leandro Toledo <https://github.com/leandrotoledo>`_ and is now maintained by
+`Leandro Toledo <https://github.com/leandrotoledo>`_.
+The current development team includes
+
+- `Hinrich Mahler <https://github.com/Bibo-Joshi>`_ (maintainer)
+- `Poolitzer <https://github.com/Poolitzer>`_ (community liaison)
+- `Shivam <https://github.com/Starry69>`_
+- `Harshil <https://github.com/harshil21>`_
+
+Emeritus maintainers include
 `Jannes Höke <https://github.com/jh0ker>`_ (`@jh0ker <https://t.me/jh0ker>`_ on Telegram),
-`Noam Meltzer <https://github.com/tsnoam>`_, `Pieter Schutz <https://github.com/eldinnie>`_, `Jasmin Bom <https://github.com/jsmnbom>`_ and `Hinrich Mahler <https://github.com/Bibo-Joshi>`_.
+`Noam Meltzer <https://github.com/tsnoam>`_, `Pieter Schutz <https://github.com/eldinnie>`_ and `Jasmin Bom <https://github.com/jsmnbom>`_.
+
+Vendored packages
+-----------------
 
 We're vendoring urllib3 as part of ``python-telegram-bot`` which is distributed under the MIT
 license. For more info, full credits & license terms, the sources can be found here:
@@ -36,9 +47,11 @@ The following wonderful people contributed directly or indirectly to this projec
 - `Eugene Lisitsky <https://github.com/lisitsky>`_
 - `Eugenio Panadero <https://github.com/azogue>`_
 - `Evan Haberecht <https://github.com/habereet>`_
+- `Evgeny Denisov <https://github.com/eIGato>`_
 - `evgfilim1 <https://github.com/evgfilim1>`_
 - `franciscod <https://github.com/franciscod>`_
 - `gamgi <https://github.com/gamgi>`_
+- `Gauthamram Ravichandran <https://github.com/GauthamramRavichandran>`_
 - `Harshil <https://github.com/harshil21>`_
 - `Hugo Damer <https://github.com/HakimusGIT>`_
 - `ihoru <https://github.com/ihoru>`_
@@ -58,10 +71,13 @@ The following wonderful people contributed directly or indirectly to this projec
 - `Loo Zheng Yuan <https://github.com/loozhengyuan>`_
 - `LRezende <https://github.com/lrezende>`_
 - `macrojames <https://github.com/macrojames>`_
+- `Matheus Lemos <https://github.com/mlemosf>`_
 - `Michael Elovskikh <https://github.com/wronglink>`_
 - `Mischa Krüger <https://github.com/Makman2>`_
 - `naveenvhegde <https://github.com/naveenvhegde>`_
 - `neurrone <https://github.com/neurrone>`_
+- `NikitaPirate <https://github.com/NikitaPirate>`_
+- `Nikolai Krivenko <https://github.com/nkrivenko>`_
 - `njittam <https://github.com/njittam>`_
 - `Noam Meltzer <https://github.com/tsnoam>`_
 - `Oleg Shlyazhko <https://github.com/ollmer>`_
@@ -72,6 +88,7 @@ The following wonderful people contributed directly or indirectly to this projec
 - `Paul Larsen <https://github.com/PaulSonOfLars>`_
 - `Pieter Schutz <https://github.com/eldinnie>`_
 - `Poolitzer <https://github.com/Poolitzer>`_
+- `Pranjalya Tiwari <https://github.com/Pranjalya>`_
 - `Rahiel Kasim <https://github.com/rahiel>`_
 - `Riko Naka <https://github.com/rikonaka>`_
 - `Rizlas <https://github.com/rizlas>`_
@@ -82,12 +99,14 @@ The following wonderful people contributed directly or indirectly to this projec
 - `sooyhwang <https://github.com/sooyhwang>`_
 - `syntx <https://github.com/syntx>`_
 - `thodnev <https://github.com/thodnev>`_
+- `Timur Kushukov <https://github.com/timqsh>`_
 - `Trainer Jono <https://github.com/Tr-Jono>`_
 - `Valentijn <https://github.com/Faalentijn>`_
 - `voider1 <https://github.com/voider1>`_
 - `Vorobjev Simon <https://github.com/simonvorobjev>`_
 - `Wagner Macedo <https://github.com/wagnerluis1982>`_
 - `wjt <https://github.com/wjt>`_
+- `zeroone2numeral2 <https://github.com/zeroone2numeral2>`_
 - `zeshuaro <https://github.com/zeshuaro>`_
 
 Please add yourself here alphabetically when you submit your first pull request.

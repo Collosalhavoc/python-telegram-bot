@@ -2,7 +2,7 @@
 # pylint: disable=R0903
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,41 +19,53 @@
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 """This module contains an object that represents a Telegram Poll."""
 
+import datetime
 import sys
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, ClassVar
 
-from telegram import (TelegramObject, User, MessageEntity)
-from telegram.utils.helpers import to_timestamp, from_timestamp
+from telegram import MessageEntity, TelegramObject, User, constants
+from telegram.utils.helpers import from_timestamp, to_timestamp
+from telegram.utils.types import JSONDict
+
+if TYPE_CHECKING:
+    from telegram import Bot
 
 
 class PollOption(TelegramObject):
     """
     This object contains information about one answer option in a poll.
 
-    Attributes:
-        text (:obj:`str`): Option text, 1-100 characters.
-        voter_count (:obj:`int`): Number of users that voted for this option.
+    Objects of this class are comparable in terms of equality. Two objects of this class are
+    considered equal, if their :attr:`text` and :attr:`voter_count` are equal.
 
     Args:
         text (:obj:`str`): Option text, 1-100 characters.
         voter_count (:obj:`int`): Number of users that voted for this option.
 
+    Attributes:
+        text (:obj:`str`): Option text, 1-100 characters.
+        voter_count (:obj:`int`): Number of users that voted for this option.
+
     """
 
-    def __init__(self, text, voter_count, **kwargs):
+    __slots__ = ('voter_count', 'text', '_id_attrs')
+
+    def __init__(self, text: str, voter_count: int, **_kwargs: Any):
         self.text = text
         self.voter_count = voter_count
 
-    @classmethod
-    def de_json(cls, data, bot):
-        if not data:
-            return None
+        self._id_attrs = (self.text, self.voter_count)
 
-        return cls(**data)
+    MAX_LENGTH: ClassVar[int] = constants.MAX_POLL_OPTION_LENGTH
+    """:const:`telegram.constants.MAX_POLL_OPTION_LENGTH`"""
 
 
 class PollAnswer(TelegramObject):
     """
     This object represents an answer of a user in a non-anonymous poll.
+
+    Objects of this class are comparable in terms of equality. Two objects of this class are
+    considered equal, if their :attr:`poll_id`, :attr:`user` and :attr:`options_ids` are equal.
 
     Attributes:
         poll_id (:obj:`str`): Unique poll identifier.
@@ -67,17 +79,23 @@ class PollAnswer(TelegramObject):
             May be empty if the user retracted their vote.
 
     """
-    def __init__(self, poll_id, user, option_ids, **kwargs):
+
+    __slots__ = ('option_ids', 'user', 'poll_id', '_id_attrs')
+
+    def __init__(self, poll_id: str, user: User, option_ids: List[int], **_kwargs: Any):
         self.poll_id = poll_id
         self.user = user
         self.option_ids = option_ids
 
+        self._id_attrs = (self.poll_id, self.user, tuple(self.option_ids))
+
     @classmethod
-    def de_json(cls, data, bot):
+    def de_json(cls, data: Optional[JSONDict], bot: 'Bot') -> Optional['PollAnswer']:
+        """See :meth:`telegram.TelegramObject.de_json`."""
+        data = cls._parse_data(data)
+
         if not data:
             return None
-
-        data = super(PollAnswer, cls).de_json(data, bot)
 
         data['user'] = User.de_json(data.get('user'), bot)
 
@@ -88,9 +106,12 @@ class Poll(TelegramObject):
     """
     This object contains information about a poll.
 
+    Objects of this class are comparable in terms of equality. Two objects of this class are
+    considered equal, if their :attr:`id` is equal.
+
     Attributes:
         id (:obj:`str`): Unique poll identifier.
-        question (:obj:`str`): Poll question, 1-255 characters.
+        question (:obj:`str`): Poll question, 1-300 characters.
         options (List[:class:`PollOption`]): List of poll options.
         total_voter_count (:obj:`int`): Total number of users that voted in the poll.
         is_closed (:obj:`bool`): :obj:`True`, if the poll is closed.
@@ -109,7 +130,7 @@ class Poll(TelegramObject):
 
     Args:
         id (:obj:`str`): Unique poll identifier.
-        question (:obj:`str`): Poll question, 1-255 characters.
+        question (:obj:`str`): Poll question, 1-300 characters.
         options (List[:class:`PollOption`]): List of poll options.
         is_closed (:obj:`bool`): :obj:`True`, if the poll is closed.
         is_anonymous (:obj:`bool`): :obj:`True`, if the poll is anonymous.
@@ -129,22 +150,41 @@ class Poll(TelegramObject):
 
     """
 
-    def __init__(self,
-                 id,
-                 question,
-                 options,
-                 total_voter_count,
-                 is_closed,
-                 is_anonymous,
-                 type,
-                 allows_multiple_answers,
-                 correct_option_id=None,
-                 explanation=None,
-                 explanation_entities=None,
-                 open_period=None,
-                 close_date=None,
-                 **kwargs):
-        self.id = id
+    __slots__ = (
+        'total_voter_count',
+        'allows_multiple_answers',
+        'open_period',
+        'options',
+        'type',
+        'explanation_entities',
+        'is_anonymous',
+        'close_date',
+        'is_closed',
+        'id',
+        'explanation',
+        'question',
+        'correct_option_id',
+        '_id_attrs',
+    )
+
+    def __init__(
+        self,
+        id: str,  # pylint: disable=W0622
+        question: str,
+        options: List[PollOption],
+        total_voter_count: int,
+        is_closed: bool,
+        is_anonymous: bool,
+        type: str,  # pylint: disable=W0622
+        allows_multiple_answers: bool,
+        correct_option_id: int = None,
+        explanation: str = None,
+        explanation_entities: List[MessageEntity] = None,
+        open_period: int = None,
+        close_date: datetime.datetime = None,
+        **_kwargs: Any,
+    ):
+        self.id = id  # pylint: disable=C0103
         self.question = question
         self.options = options
         self.total_voter_count = total_voter_count
@@ -161,11 +201,12 @@ class Poll(TelegramObject):
         self._id_attrs = (self.id,)
 
     @classmethod
-    def de_json(cls, data, bot):
+    def de_json(cls, data: Optional[JSONDict], bot: 'Bot') -> Optional['Poll']:
+        """See :meth:`telegram.TelegramObject.de_json`."""
+        data = cls._parse_data(data)
+
         if not data:
             return None
-
-        data = super().de_json(data, bot)
 
         data['options'] = [PollOption.de_json(option, bot) for option in data['options']]
         data['explanation_entities'] = MessageEntity.de_list(data.get('explanation_entities'), bot)
@@ -173,7 +214,8 @@ class Poll(TelegramObject):
 
         return cls(**data)
 
-    def to_dict(self):
+    def to_dict(self) -> JSONDict:
+        """See :meth:`telegram.TelegramObject.to_dict`."""
         data = super().to_dict()
 
         data['options'] = [x.to_dict() for x in self.options]
@@ -183,7 +225,7 @@ class Poll(TelegramObject):
 
         return data
 
-    def parse_explanation_entity(self, entity):
+    def parse_explanation_entity(self, entity: MessageEntity) -> str:
         """Returns the text from a given :class:`telegram.MessageEntity`.
 
         Note:
@@ -198,17 +240,22 @@ class Poll(TelegramObject):
         Returns:
             :obj:`str`: The text of the given entity.
 
+        Raises:
+            RuntimeError: If the poll has no explanation.
+
         """
+        if not self.explanation:
+            raise RuntimeError("This Poll has no 'explanation'.")
+
         # Is it a narrow build, if so we don't need to convert
-        if sys.maxunicode == 0xffff:
-            return self.explanation[entity.offset:entity.offset + entity.length]
-        else:
-            entity_text = self.explanation.encode('utf-16-le')
-            entity_text = entity_text[entity.offset * 2:(entity.offset + entity.length) * 2]
+        if sys.maxunicode == 0xFFFF:
+            return self.explanation[entity.offset : entity.offset + entity.length]
+        entity_text = self.explanation.encode('utf-16-le')
+        entity_text = entity_text[entity.offset * 2 : (entity.offset + entity.length) * 2]
 
         return entity_text.decode('utf-16-le')
 
-    def parse_explanation_entities(self, types=None):
+    def parse_explanation_entities(self, types: List[str] = None) -> Dict[MessageEntity, str]:
         """
         Returns a :obj:`dict` that maps :class:`telegram.MessageEntity` to :obj:`str`.
         It contains entities from this polls explanation filtered by their ``type`` attribute as
@@ -234,10 +281,15 @@ class Poll(TelegramObject):
 
         return {
             entity: self.parse_explanation_entity(entity)
-            for entity in self.explanation_entities if entity.type in types
+            for entity in (self.explanation_entities or [])
+            if entity.type in types
         }
 
-    REGULAR = "regular"
-    """:obj:`str`: 'regular'"""
-    QUIZ = "quiz"
-    """:obj:`str`: 'quiz'"""
+    REGULAR: ClassVar[str] = constants.POLL_REGULAR
+    """:const:`telegram.constants.POLL_REGULAR`"""
+    QUIZ: ClassVar[str] = constants.POLL_QUIZ
+    """:const:`telegram.constants.POLL_QUIZ`"""
+    MAX_QUESTION_LENGTH: ClassVar[int] = constants.MAX_POLL_QUESTION_LENGTH
+    """:const:`telegram.constants.MAX_POLL_QUESTION_LENGTH`"""
+    MAX_OPTION_LENGTH: ClassVar[int] = constants.MAX_POLL_OPTION_LENGTH
+    """:const:`telegram.constants.MAX_POLL_OPTION_LENGTH`"""

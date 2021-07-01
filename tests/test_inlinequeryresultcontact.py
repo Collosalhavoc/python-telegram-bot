@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,15 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
 import pytest
 
-from telegram import (InlineQueryResultVoice, InputTextMessageContent, InlineKeyboardButton,
-                      InlineKeyboardMarkup, InlineQueryResultContact)
+from telegram import (
+    InlineQueryResultVoice,
+    InputTextMessageContent,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    InlineQueryResultContact,
+)
 
 
 @pytest.fixture(scope='class')
@@ -34,7 +38,8 @@ def inline_query_result_contact():
         thumb_width=TestInlineQueryResultContact.thumb_width,
         thumb_height=TestInlineQueryResultContact.thumb_height,
         input_message_content=TestInlineQueryResultContact.input_message_content,
-        reply_markup=TestInlineQueryResultContact.reply_markup)
+        reply_markup=TestInlineQueryResultContact.reply_markup,
+    )
 
 
 class TestInlineQueryResultContact:
@@ -49,6 +54,15 @@ class TestInlineQueryResultContact:
     input_message_content = InputTextMessageContent('input_message_content')
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton('reply_markup')]])
 
+    def test_slot_behaviour(self, inline_query_result_contact, mro_slots, recwarn):
+        inst = inline_query_result_contact
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.id = 'should give warning', self.id_
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
+
     def test_expected_values(self, inline_query_result_contact):
         assert inline_query_result_contact.id == self.id_
         assert inline_query_result_contact.type == self.type_
@@ -58,8 +72,10 @@ class TestInlineQueryResultContact:
         assert inline_query_result_contact.thumb_url == self.thumb_url
         assert inline_query_result_contact.thumb_width == self.thumb_width
         assert inline_query_result_contact.thumb_height == self.thumb_height
-        assert (inline_query_result_contact.input_message_content.to_dict()
-                == self.input_message_content.to_dict())
+        assert (
+            inline_query_result_contact.input_message_content.to_dict()
+            == self.input_message_content.to_dict()
+        )
         assert inline_query_result_contact.reply_markup.to_dict() == self.reply_markup.to_dict()
 
     def test_to_dict(self, inline_query_result_contact):
@@ -68,22 +84,36 @@ class TestInlineQueryResultContact:
         assert isinstance(inline_query_result_contact_dict, dict)
         assert inline_query_result_contact_dict['id'] == inline_query_result_contact.id
         assert inline_query_result_contact_dict['type'] == inline_query_result_contact.type
-        assert (inline_query_result_contact_dict['phone_number']
-                == inline_query_result_contact.phone_number)
-        assert (inline_query_result_contact_dict['first_name']
-                == inline_query_result_contact.first_name)
-        assert (inline_query_result_contact_dict['last_name']
-                == inline_query_result_contact.last_name)
-        assert (inline_query_result_contact_dict['thumb_url']
-                == inline_query_result_contact.thumb_url)
-        assert (inline_query_result_contact_dict['thumb_width']
-                == inline_query_result_contact.thumb_width)
-        assert (inline_query_result_contact_dict['thumb_height']
-                == inline_query_result_contact.thumb_height)
-        assert (inline_query_result_contact_dict['input_message_content']
-                == inline_query_result_contact.input_message_content.to_dict())
-        assert (inline_query_result_contact_dict['reply_markup']
-                == inline_query_result_contact.reply_markup.to_dict())
+        assert (
+            inline_query_result_contact_dict['phone_number']
+            == inline_query_result_contact.phone_number
+        )
+        assert (
+            inline_query_result_contact_dict['first_name']
+            == inline_query_result_contact.first_name
+        )
+        assert (
+            inline_query_result_contact_dict['last_name'] == inline_query_result_contact.last_name
+        )
+        assert (
+            inline_query_result_contact_dict['thumb_url'] == inline_query_result_contact.thumb_url
+        )
+        assert (
+            inline_query_result_contact_dict['thumb_width']
+            == inline_query_result_contact.thumb_width
+        )
+        assert (
+            inline_query_result_contact_dict['thumb_height']
+            == inline_query_result_contact.thumb_height
+        )
+        assert (
+            inline_query_result_contact_dict['input_message_content']
+            == inline_query_result_contact.input_message_content.to_dict()
+        )
+        assert (
+            inline_query_result_contact_dict['reply_markup']
+            == inline_query_result_contact.reply_markup.to_dict()
+        )
 
     def test_equality(self):
         a = InlineQueryResultContact(self.id_, self.phone_number, self.first_name)

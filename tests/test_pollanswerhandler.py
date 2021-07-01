@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,11 +20,21 @@ from queue import Queue
 
 import pytest
 
-from telegram import (Update, CallbackQuery, Bot, Message, User, Chat, PollAnswer,
-                      ChosenInlineResult, ShippingQuery, PreCheckoutQuery)
+from telegram import (
+    Update,
+    CallbackQuery,
+    Bot,
+    Message,
+    User,
+    Chat,
+    PollAnswer,
+    ChosenInlineResult,
+    ShippingQuery,
+    PreCheckoutQuery,
+)
 from telegram.ext import PollAnswerHandler, CallbackContext, JobQueue
 
-message = Message(1, User(1, '', False), None, Chat(1, ''), text='Text')
+message = Message(1, None, Chat(1, ''), from_user=User(1, '', False), text='Text')
 
 params = [
     {'message': message},
@@ -35,12 +45,20 @@ params = [
     {'chosen_inline_result': ChosenInlineResult('id', User(1, '', False), '')},
     {'shipping_query': ShippingQuery('id', User(1, '', False), '', None)},
     {'pre_checkout_query': PreCheckoutQuery('id', User(1, '', False), '', 0, '')},
-    {'callback_query': CallbackQuery(1, User(1, '', False), 'chat')}
+    {'callback_query': CallbackQuery(1, User(1, '', False), 'chat')},
 ]
 
-ids = ('message', 'edited_message', 'callback_query', 'channel_post',
-       'edited_channel_post', 'chosen_inline_result',
-       'shipping_query', 'pre_checkout_query', 'callback_query_without_message')
+ids = (
+    'message',
+    'edited_message',
+    'callback_query',
+    'channel_post',
+    'edited_channel_post',
+    'chosen_inline_result',
+    'shipping_query',
+    'pre_checkout_query',
+    'callback_query_without_message',
+)
 
 
 @pytest.fixture(scope='class', params=params, ids=ids)
@@ -55,6 +73,15 @@ def poll_answer(bot):
 
 class TestPollAnswerHandler:
     test_flag = False
+
+    def test_slot_behaviour(self, recwarn, mro_slots):
+        handler = PollAnswerHandler(self.callback_basic)
+        for attr in handler.__slots__:
+            assert getattr(handler, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not handler.__dict__, f"got missing slot(s): {handler.__dict__}"
+        assert len(mro_slots(handler)) == len(set(mro_slots(handler))), "duplicate slot"
+        handler.custom, handler.callback = 'should give warning', self.callback_basic
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
 
     @pytest.fixture(autouse=True)
     def reset(self):
@@ -78,15 +105,17 @@ class TestPollAnswerHandler:
         self.test_flag = (job_queue is not None) and (update_queue is not None)
 
     def callback_context(self, update, context):
-        self.test_flag = (isinstance(context, CallbackContext)
-                          and isinstance(context.bot, Bot)
-                          and isinstance(update, Update)
-                          and isinstance(context.update_queue, Queue)
-                          and isinstance(context.job_queue, JobQueue)
-                          and isinstance(context.user_data, dict)
-                          and context.chat_data is None
-                          and isinstance(context.bot_data, dict)
-                          and isinstance(update.poll_answer, PollAnswer))
+        self.test_flag = (
+            isinstance(context, CallbackContext)
+            and isinstance(context.bot, Bot)
+            and isinstance(update, Update)
+            and isinstance(context.update_queue, Queue)
+            and isinstance(context.job_queue, JobQueue)
+            and isinstance(context.user_data, dict)
+            and context.chat_data is None
+            and isinstance(context.bot_data, dict)
+            and isinstance(update.poll_answer, PollAnswer)
+        )
 
     def test_basic(self, dp, poll_answer):
         handler = PollAnswerHandler(self.callback_basic)
@@ -113,8 +142,7 @@ class TestPollAnswerHandler:
         assert self.test_flag
 
         dp.remove_handler(handler)
-        handler = PollAnswerHandler(self.callback_data_2, pass_chat_data=True,
-                                    pass_user_data=True)
+        handler = PollAnswerHandler(self.callback_data_2, pass_chat_data=True, pass_user_data=True)
         dp.add_handler(handler)
 
         self.test_flag = False
@@ -129,8 +157,7 @@ class TestPollAnswerHandler:
         assert self.test_flag
 
         dp.remove_handler(handler)
-        handler = PollAnswerHandler(self.callback_queue_1,
-                                    pass_update_queue=True)
+        handler = PollAnswerHandler(self.callback_queue_1, pass_update_queue=True)
         dp.add_handler(handler)
 
         self.test_flag = False
@@ -138,8 +165,9 @@ class TestPollAnswerHandler:
         assert self.test_flag
 
         dp.remove_handler(handler)
-        handler = PollAnswerHandler(self.callback_queue_2, pass_job_queue=True,
-                                    pass_update_queue=True)
+        handler = PollAnswerHandler(
+            self.callback_queue_2, pass_job_queue=True, pass_update_queue=True
+        )
         dp.add_handler(handler)
 
         self.test_flag = False

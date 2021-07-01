@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,6 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
 import pytest
 
 from telegram import LoginUrl
@@ -24,9 +23,12 @@ from telegram import LoginUrl
 
 @pytest.fixture(scope='class')
 def login_url():
-    return LoginUrl(url=TestLoginUrl.url, forward_text=TestLoginUrl.forward_text,
-                    bot_username=TestLoginUrl.bot_username,
-                    request_write_access=TestLoginUrl.request_write_access)
+    return LoginUrl(
+        url=TestLoginUrl.url,
+        forward_text=TestLoginUrl.forward_text,
+        bot_username=TestLoginUrl.bot_username,
+        request_write_access=TestLoginUrl.request_write_access,
+    )
 
 
 class TestLoginUrl:
@@ -34,6 +36,14 @@ class TestLoginUrl:
     forward_text = "Send me forward!"
     bot_username = "botname"
     request_write_access = True
+
+    def test_slot_behaviour(self, login_url, recwarn, mro_slots):
+        for attr in login_url.__slots__:
+            assert getattr(login_url, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not login_url.__dict__, f"got missing slot(s): {login_url.__dict__}"
+        assert len(mro_slots(login_url)) == len(set(mro_slots(login_url))), "duplicate slot"
+        login_url.custom, login_url.url = 'should give warning', self.url
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
 
     def test_to_dict(self, login_url):
         login_url_dict = login_url.to_dict()

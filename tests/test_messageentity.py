@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,14 +16,12 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
 import pytest
 
 from telegram import MessageEntity, User
 
 
-@pytest.fixture(scope="class",
-                params=MessageEntity.ALL_TYPES)
+@pytest.fixture(scope="class", params=MessageEntity.ALL_TYPES)
 def message_entity(request):
     type_ = request.param
     url = None
@@ -44,12 +42,17 @@ class TestMessageEntity:
     length = 2
     url = 'url'
 
+    def test_slot_behaviour(self, message_entity, recwarn, mro_slots):
+        inst = message_entity
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.type = 'should give warning', self.type_
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
+
     def test_de_json(self, bot):
-        json_dict = {
-            'type': self.type_,
-            'offset': self.offset,
-            'length': self.length
-        }
+        json_dict = {'type': self.type_, 'offset': self.offset, 'length': self.length}
         entity = MessageEntity.de_json(json_dict, bot)
 
         assert entity.type == self.type_

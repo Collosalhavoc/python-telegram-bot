@@ -3,15 +3,16 @@ telegram.ext package
 
 .. toctree::
 
+    telegram.ext.extbot
     telegram.ext.updater
     telegram.ext.dispatcher
     telegram.ext.dispatcherhandlerstop
-    telegram.ext.filters
+    telegram.ext.callbackcontext
     telegram.ext.job
     telegram.ext.jobqueue
     telegram.ext.messagequeue
     telegram.ext.delayqueue
-    telegram.ext.callbackcontext
+    telegram.ext.contexttypes
     telegram.ext.defaults
 
 Handlers
@@ -22,10 +23,12 @@ Handlers
     telegram.ext.handler
     telegram.ext.callbackqueryhandler
     telegram.ext.choseninlineresulthandler
-    telegram.ext.conversationhandler
+    telegram.ext.chatmemberhandler
     telegram.ext.commandhandler
+    telegram.ext.conversationhandler
     telegram.ext.inlinequeryhandler
     telegram.ext.messagehandler
+    telegram.ext.filters
     telegram.ext.pollanswerhandler
     telegram.ext.pollhandler
     telegram.ext.precheckoutqueryhandler
@@ -44,3 +47,19 @@ Persistence
     telegram.ext.basepersistence
     telegram.ext.picklepersistence
     telegram.ext.dictpersistence
+
+Arbitrary Callback Data
+-----------------------
+
+.. toctree::
+
+    telegram.ext.callbackdatacache
+    telegram.ext.invalidcallbackdata
+
+utils
+-----
+
+.. toctree::
+
+    telegram.ext.utils.promise
+    telegram.ext.utils.types

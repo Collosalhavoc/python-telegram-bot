@@ -50,6 +50,8 @@ Instructions for making a code change
 
 The central development branch is ``master``, which should be clean and ready for release at any time. In general, all changes should be done as feature branches based off of ``master``.
 
+If you want to do solely documentation changes, base them and PR to the branch ``doc-fixes``. This branch also has its own `RTD build`_.
+
 Here's how to make a one-off code change.
 
 1. **Choose a descriptive branch name.** It should be lowercase, hyphen-separated, and a noun describing the change (so, ``fuzzy-rules``, but not ``implement-fuzzy-rules``). Also, it shouldn't start with ``hotfix`` or ``release``.
@@ -68,7 +70,9 @@ Here's how to make a one-off code change.
    - You can refer to relevant issues in the commit message by writing, e.g., "#105".
 
    - Your code should adhere to the `PEP 8 Style Guide`_, with the exception that we have a maximum line length of 99.
-   
+
+   - Provide static typing with signature annotations. The documentation of `MyPy`_ will be a good start, the cheat sheet is `here`_. We also have some custom type aliases in ``telegram.utils.helpers.typing``.
+
    - Document your code. This project uses `sphinx`_ to generate static HTML docs. To build them, first make sure you have the required dependencies:
 
      .. code-block:: bash
@@ -89,11 +93,15 @@ Here's how to make a one-off code change.
 
      Once the process terminates, you can view the built documentation by opening ``docs/build/html/index.html`` with a browser.
 
-   - For consistency, please conform to `Google Python Style Guide`_ and `Google Python Style Docstrings`_. In addition, code should be formatted consistently with other code around it.
+   - Add ``.. versionadded:: version``, ``.. versionchanged:: version`` or ``.. deprecated:: version`` to the associated documentation of your changes, depending on what kind of change you made. This only applies if the change you made is visible to an end user. The directives should be added to class/method descriptions if their general behaviour changed and to the description of all arguments & attributes that changed.
+
+   - For consistency, please conform to `Google Python Style Guide`_ and `Google Python Style Docstrings`_.
 
    - The following exceptions to the above (Google's) style guides applies:
 
         - Documenting types of global variables and complex types of class members can be done using the Sphinx docstring convention.
+
+   -  In addition, PTB uses the `Black`_ coder formatting. Plugins for Black exist for some `popular editors`_. You can use those instead of manually formatting everything.
 
    - Please ensure that the code you write is well-tested.
 
@@ -102,12 +110,6 @@ Here's how to make a one-off code change.
    - Add yourself to the AUTHORS.rst_ file in an alphabetical fashion.
 
    - Before making a commit ensure that all automated tests still pass:
-
-     .. code-block::
-
-        $ make test
-
-     If you don't have ``make``, do:
 
      .. code-block::
 
@@ -121,17 +123,17 @@ Here's how to make a one-off code change.
 
      prior to running the tests.
 
-   - To actually make the commit (this will trigger tests for yapf, lint and pep8 automatically):
+   - If you want run style & type checks before committing run
+
+     .. code-block::
+
+        $ pre-commit run -a
+
+   - To actually make the commit (this will trigger tests style & type checks automatically):
 
      .. code-block:: bash
 
         $ git add your-file-changed.py
-
-   - yapf may change code formatting, make sure to re-add them to your commit.
-
-     .. code-block:: bash
-
-      $ git commit -a -m "your-commit-message-here"
 
    - Finally, push it to your GitHub fork, run:
 
@@ -187,15 +189,10 @@ Here's how to make a one-off code change.
 Style commandments
 ------------------
 
-Specific commandments
-#####################
-
-- Avoid using "double quotes" where you can reasonably use 'single quotes'.
-
 Assert comparison order
 #######################
 
-- assert statements should compare in **actual** == **expected** order.
+Assert statements should compare in **actual** == **expected** order.
 For example (assuming ``test_call`` is the thing being tested):
 
 .. code-block:: python
@@ -251,3 +248,8 @@ break the API classes. For example:
 .. _`Google Python Style Guide`: http://google.github.io/styleguide/pyguide.html
 .. _`Google Python Style Docstrings`: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 .. _AUTHORS.rst: ../AUTHORS.rst
+.. _`MyPy`: https://mypy.readthedocs.io/en/stable/index.html
+.. _`here`: https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html
+.. _`Black`: https://black.readthedocs.io/en/stable/index.html
+.. _`popular editors`: https://black.readthedocs.io/en/stable/editor_integration.html
+.. _`RTD build`: https://python-telegram-bot.readthedocs.io/en/doc-fixes

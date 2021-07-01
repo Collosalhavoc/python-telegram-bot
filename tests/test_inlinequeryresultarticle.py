@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,13 @@
 
 import pytest
 
-from telegram import (InlineKeyboardMarkup, InlineQueryResultAudio, InlineQueryResultArticle,
-                      InlineKeyboardButton, InputTextMessageContent)
+from telegram import (
+    InlineKeyboardMarkup,
+    InlineQueryResultAudio,
+    InlineQueryResultArticle,
+    InlineKeyboardButton,
+    InputTextMessageContent,
+)
 
 
 @pytest.fixture(scope='class')
@@ -35,7 +40,8 @@ def inline_query_result_article():
         description=TestInlineQueryResultArticle.description,
         thumb_url=TestInlineQueryResultArticle.thumb_url,
         thumb_height=TestInlineQueryResultArticle.thumb_height,
-        thumb_width=TestInlineQueryResultArticle.thumb_width)
+        thumb_width=TestInlineQueryResultArticle.thumb_width,
+    )
 
 
 class TestInlineQueryResultArticle:
@@ -51,12 +57,23 @@ class TestInlineQueryResultArticle:
     thumb_height = 10
     thumb_width = 15
 
+    def test_slot_behaviour(self, inline_query_result_article, mro_slots, recwarn):
+        inst = inline_query_result_article
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.id = 'should give warning', self.id_
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
+
     def test_expected_values(self, inline_query_result_article):
         assert inline_query_result_article.type == self.type_
         assert inline_query_result_article.id == self.id_
         assert inline_query_result_article.title == self.title
-        assert (inline_query_result_article.input_message_content.to_dict()
-                == self.input_message_content.to_dict())
+        assert (
+            inline_query_result_article.input_message_content.to_dict()
+            == self.input_message_content.to_dict()
+        )
         assert inline_query_result_article.reply_markup.to_dict() == self.reply_markup.to_dict()
         assert inline_query_result_article.url == self.url
         assert inline_query_result_article.hide_url == self.hide_url
@@ -72,20 +89,31 @@ class TestInlineQueryResultArticle:
         assert inline_query_result_article_dict['type'] == inline_query_result_article.type
         assert inline_query_result_article_dict['id'] == inline_query_result_article.id
         assert inline_query_result_article_dict['title'] == inline_query_result_article.title
-        assert (inline_query_result_article_dict['input_message_content']
-                == inline_query_result_article.input_message_content.to_dict())
-        assert (inline_query_result_article_dict['reply_markup']
-                == inline_query_result_article.reply_markup.to_dict())
+        assert (
+            inline_query_result_article_dict['input_message_content']
+            == inline_query_result_article.input_message_content.to_dict()
+        )
+        assert (
+            inline_query_result_article_dict['reply_markup']
+            == inline_query_result_article.reply_markup.to_dict()
+        )
         assert inline_query_result_article_dict['url'] == inline_query_result_article.url
         assert inline_query_result_article_dict['hide_url'] == inline_query_result_article.hide_url
-        assert (inline_query_result_article_dict['description']
-                == inline_query_result_article.description)
-        assert (inline_query_result_article_dict['thumb_url']
-                == inline_query_result_article.thumb_url)
-        assert (inline_query_result_article_dict['thumb_height']
-                == inline_query_result_article.thumb_height)
-        assert (inline_query_result_article_dict['thumb_width']
-                == inline_query_result_article.thumb_width)
+        assert (
+            inline_query_result_article_dict['description']
+            == inline_query_result_article.description
+        )
+        assert (
+            inline_query_result_article_dict['thumb_url'] == inline_query_result_article.thumb_url
+        )
+        assert (
+            inline_query_result_article_dict['thumb_height']
+            == inline_query_result_article.thumb_height
+        )
+        assert (
+            inline_query_result_article_dict['thumb_width']
+            == inline_query_result_article.thumb_width
+        )
 
     def test_equality(self):
         a = InlineQueryResultArticle(self.id_, self.title, self.input_message_content)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,6 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
 import pytest
 
 from telegram import PassportElementErrorFile, PassportElementErrorSelfie
@@ -24,9 +23,11 @@ from telegram import PassportElementErrorFile, PassportElementErrorSelfie
 
 @pytest.fixture(scope='class')
 def passport_element_error_file():
-    return PassportElementErrorFile(TestPassportElementErrorFile.type_,
-                                    TestPassportElementErrorFile.file_hash,
-                                    TestPassportElementErrorFile.message)
+    return PassportElementErrorFile(
+        TestPassportElementErrorFile.type_,
+        TestPassportElementErrorFile.file_hash,
+        TestPassportElementErrorFile.message,
+    )
 
 
 class TestPassportElementErrorFile:
@@ -34,6 +35,15 @@ class TestPassportElementErrorFile:
     type_ = 'test_type'
     file_hash = 'file_hash'
     message = 'Error message'
+
+    def test_slot_behaviour(self, passport_element_error_file, recwarn, mro_slots):
+        inst = passport_element_error_file
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.type = 'should give warning', self.type_
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
 
     def test_expected_values(self, passport_element_error_file):
         assert passport_element_error_file.source == self.source
@@ -45,14 +55,12 @@ class TestPassportElementErrorFile:
         passport_element_error_file_dict = passport_element_error_file.to_dict()
 
         assert isinstance(passport_element_error_file_dict, dict)
-        assert (passport_element_error_file_dict['source']
-                == passport_element_error_file.source)
-        assert (passport_element_error_file_dict['type']
-                == passport_element_error_file.type)
-        assert (passport_element_error_file_dict['file_hash']
-                == passport_element_error_file.file_hash)
-        assert (passport_element_error_file_dict['message']
-                == passport_element_error_file.message)
+        assert passport_element_error_file_dict['source'] == passport_element_error_file.source
+        assert passport_element_error_file_dict['type'] == passport_element_error_file.type
+        assert (
+            passport_element_error_file_dict['file_hash'] == passport_element_error_file.file_hash
+        )
+        assert passport_element_error_file_dict['message'] == passport_element_error_file.message
 
     def test_equality(self):
         a = PassportElementErrorFile(self.type_, self.file_hash, self.message)

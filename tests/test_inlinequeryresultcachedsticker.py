@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,12 +16,15 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
 import pytest
 
-from telegram import (InputTextMessageContent, InlineKeyboardButton,
-                      InlineQueryResultCachedSticker, InlineQueryResultCachedVoice,
-                      InlineKeyboardMarkup)
+from telegram import (
+    InputTextMessageContent,
+    InlineKeyboardButton,
+    InlineQueryResultCachedSticker,
+    InlineQueryResultCachedVoice,
+    InlineKeyboardMarkup,
+)
 
 
 @pytest.fixture(scope='class')
@@ -30,7 +33,8 @@ def inline_query_result_cached_sticker():
         TestInlineQueryResultCachedSticker.id_,
         TestInlineQueryResultCachedSticker.sticker_file_id,
         input_message_content=TestInlineQueryResultCachedSticker.input_message_content,
-        reply_markup=TestInlineQueryResultCachedSticker.reply_markup)
+        reply_markup=TestInlineQueryResultCachedSticker.reply_markup,
+    )
 
 
 class TestInlineQueryResultCachedSticker:
@@ -40,29 +44,51 @@ class TestInlineQueryResultCachedSticker:
     input_message_content = InputTextMessageContent('input_message_content')
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton('reply_markup')]])
 
+    def test_slot_behaviour(self, inline_query_result_cached_sticker, mro_slots, recwarn):
+        inst = inline_query_result_cached_sticker
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.id = 'should give warning', self.id_
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
+
     def test_expected_values(self, inline_query_result_cached_sticker):
         assert inline_query_result_cached_sticker.type == self.type_
         assert inline_query_result_cached_sticker.id == self.id_
         assert inline_query_result_cached_sticker.sticker_file_id == self.sticker_file_id
-        assert (inline_query_result_cached_sticker.input_message_content.to_dict()
-                == self.input_message_content.to_dict())
-        assert (inline_query_result_cached_sticker.reply_markup.to_dict()
-                == self.reply_markup.to_dict())
+        assert (
+            inline_query_result_cached_sticker.input_message_content.to_dict()
+            == self.input_message_content.to_dict()
+        )
+        assert (
+            inline_query_result_cached_sticker.reply_markup.to_dict()
+            == self.reply_markup.to_dict()
+        )
 
     def test_to_dict(self, inline_query_result_cached_sticker):
         inline_query_result_cached_sticker_dict = inline_query_result_cached_sticker.to_dict()
 
         assert isinstance(inline_query_result_cached_sticker_dict, dict)
-        assert (inline_query_result_cached_sticker_dict['type']
-                == inline_query_result_cached_sticker.type)
-        assert (inline_query_result_cached_sticker_dict['id']
-                == inline_query_result_cached_sticker.id)
-        assert (inline_query_result_cached_sticker_dict['sticker_file_id']
-                == inline_query_result_cached_sticker.sticker_file_id)
-        assert (inline_query_result_cached_sticker_dict['input_message_content']
-                == inline_query_result_cached_sticker.input_message_content.to_dict())
-        assert (inline_query_result_cached_sticker_dict['reply_markup']
-                == inline_query_result_cached_sticker.reply_markup.to_dict())
+        assert (
+            inline_query_result_cached_sticker_dict['type']
+            == inline_query_result_cached_sticker.type
+        )
+        assert (
+            inline_query_result_cached_sticker_dict['id'] == inline_query_result_cached_sticker.id
+        )
+        assert (
+            inline_query_result_cached_sticker_dict['sticker_file_id']
+            == inline_query_result_cached_sticker.sticker_file_id
+        )
+        assert (
+            inline_query_result_cached_sticker_dict['input_message_content']
+            == inline_query_result_cached_sticker.input_message_content.to_dict()
+        )
+        assert (
+            inline_query_result_cached_sticker_dict['reply_markup']
+            == inline_query_result_cached_sticker.reply_markup.to_dict()
+        )
 
     def test_equality(self):
         a = InlineQueryResultCachedSticker(self.id_, self.sticker_file_id)

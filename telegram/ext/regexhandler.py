@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -20,10 +20,18 @@
 """This module contains the RegexHandler class."""
 
 import warnings
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Pattern, TypeVar, Union, Any
 
+from telegram import Update
+from telegram.ext import Filters, MessageHandler
 from telegram.utils.deprecate import TelegramDeprecationWarning
+from telegram.utils.helpers import DefaultValue, DEFAULT_FALSE
+from telegram.ext.utils.types import CCT
 
-from telegram.ext import MessageHandler, Filters
+if TYPE_CHECKING:
+    from telegram.ext import Dispatcher
+
+RT = TypeVar('RT')
 
 
 class RegexHandler(MessageHandler):
@@ -33,25 +41,13 @@ class RegexHandler(MessageHandler):
     module for more information. The ``re.match`` function is used to determine if an update should
     be handled by this handler.
 
-    Attributes:
-        pattern (:obj:`str` | :obj:`Pattern`): The regex pattern.
-        callback (:obj:`callable`): The callback function for this handler.
-        pass_groups (:obj:`bool`): Determines whether ``groups`` will be passed to the
-            callback function.
-        pass_groupdict (:obj:`bool`): Determines whether ``groupdict``. will be passed to
-            the callback function.
-        pass_update_queue (:obj:`bool`): Determines whether ``update_queue`` will be
-            passed to the callback function.
-        pass_job_queue (:obj:`bool`): Determines whether ``job_queue`` will be passed to
-            the callback function.
-        pass_user_data (:obj:`bool`): Determines whether ``user_data`` will be passed to
-            the callback function.
-        pass_chat_data (:obj:`bool`): Determines whether ``chat_data`` will be passed to
-            the callback function.
-
     Note:
         This handler is being deprecated. For the same use case use:
         ``MessageHandler(Filters.regex(r'pattern'), callback)``
+
+    Warning:
+        When setting ``run_async`` to :obj:`True`, you cannot rely on adding custom
+        attributes to :class:`telegram.ext.CallbackContext`. See its docs for more info.
 
 
     Args:
@@ -88,44 +84,83 @@ class RegexHandler(MessageHandler):
             Default is :obj:`True`.
         edited_updates (:obj:`bool`, optional): Should "edited" message updates be handled? Default
             is :obj:`False`.
+        run_async (:obj:`bool`): Determines whether the callback will run asynchronously.
+            Defaults to :obj:`False`.
 
     Raises:
         ValueError
 
+    Attributes:
+        pattern (:obj:`str` | :obj:`Pattern`): The regex pattern.
+        callback (:obj:`callable`): The callback function for this handler.
+        pass_groups (:obj:`bool`): Determines whether ``groups`` will be passed to the
+            callback function.
+        pass_groupdict (:obj:`bool`): Determines whether ``groupdict``. will be passed to
+            the callback function.
+        pass_update_queue (:obj:`bool`): Determines whether ``update_queue`` will be
+            passed to the callback function.
+        pass_job_queue (:obj:`bool`): Determines whether ``job_queue`` will be passed to
+            the callback function.
+        pass_user_data (:obj:`bool`): Determines whether ``user_data`` will be passed to
+            the callback function.
+        pass_chat_data (:obj:`bool`): Determines whether ``chat_data`` will be passed to
+            the callback function.
+        run_async (:obj:`bool`): Determines whether the callback will run asynchronously.
+
     """
 
-    def __init__(self,
-                 pattern,
-                 callback,
-                 pass_groups=False,
-                 pass_groupdict=False,
-                 pass_update_queue=False,
-                 pass_job_queue=False,
-                 pass_user_data=False,
-                 pass_chat_data=False,
-                 allow_edited=False,
-                 message_updates=True,
-                 channel_post_updates=False,
-                 edited_updates=False):
-        warnings.warn('RegexHandler is deprecated. See https://git.io/fxJuV for more info',
-                      TelegramDeprecationWarning,
-                      stacklevel=2)
-        super().__init__(Filters.regex(pattern),
-                         callback,
-                         pass_update_queue=pass_update_queue,
-                         pass_job_queue=pass_job_queue,
-                         pass_user_data=pass_user_data,
-                         pass_chat_data=pass_chat_data,
-                         message_updates=message_updates,
-                         channel_post_updates=channel_post_updates,
-                         edited_updates=edited_updates)
+    __slots__ = ('pass_groups', 'pass_groupdict')
+
+    def __init__(
+        self,
+        pattern: Union[str, Pattern],
+        callback: Callable[[Update, CCT], RT],
+        pass_groups: bool = False,
+        pass_groupdict: bool = False,
+        pass_update_queue: bool = False,
+        pass_job_queue: bool = False,
+        pass_user_data: bool = False,
+        pass_chat_data: bool = False,
+        allow_edited: bool = False,  # pylint: disable=W0613
+        message_updates: bool = True,
+        channel_post_updates: bool = False,
+        edited_updates: bool = False,
+        run_async: Union[bool, DefaultValue] = DEFAULT_FALSE,
+    ):
+        warnings.warn(
+            'RegexHandler is deprecated. See https://git.io/fxJuV for more info',
+            TelegramDeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(
+            Filters.regex(pattern),
+            callback,
+            pass_update_queue=pass_update_queue,
+            pass_job_queue=pass_job_queue,
+            pass_user_data=pass_user_data,
+            pass_chat_data=pass_chat_data,
+            message_updates=message_updates,
+            channel_post_updates=channel_post_updates,
+            edited_updates=edited_updates,
+            run_async=run_async,
+        )
         self.pass_groups = pass_groups
         self.pass_groupdict = pass_groupdict
 
-    def collect_optional_args(self, dispatcher, update=None, check_result=None):
+    def collect_optional_args(
+        self,
+        dispatcher: 'Dispatcher',
+        update: Update = None,
+        check_result: Optional[Union[bool, Dict[str, Any]]] = None,
+    ) -> Dict[str, object]:
+        """Pass the results of ``re.match(pattern, text).{groups(), groupdict()}`` to the
+        callback as a keyword arguments called ``groups`` and ``groupdict``, respectively, if
+        needed.
+        """
         optional_args = super().collect_optional_args(dispatcher, update, check_result)
-        if self.pass_groups:
-            optional_args['groups'] = check_result['matches'][0].groups()
-        if self.pass_groupdict:
-            optional_args['groupdict'] = check_result['matches'][0].groupdict()
+        if isinstance(check_result, dict):
+            if self.pass_groups:
+                optional_args['groups'] = check_result['matches'][0].groups()
+            if self.pass_groupdict:
+                optional_args['groupdict'] = check_result['matches'][0].groupdict()
         return optional_args

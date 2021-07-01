@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,6 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
 import pytest
 
 from telegram import ShippingAddress
@@ -24,12 +23,14 @@ from telegram import ShippingAddress
 
 @pytest.fixture(scope='class')
 def shipping_address():
-    return ShippingAddress(TestShippingAddress.country_code,
-                           TestShippingAddress.state,
-                           TestShippingAddress.city,
-                           TestShippingAddress.street_line1,
-                           TestShippingAddress.street_line2,
-                           TestShippingAddress.post_code)
+    return ShippingAddress(
+        TestShippingAddress.country_code,
+        TestShippingAddress.state,
+        TestShippingAddress.city,
+        TestShippingAddress.street_line1,
+        TestShippingAddress.street_line2,
+        TestShippingAddress.post_code,
+    )
 
 
 class TestShippingAddress:
@@ -40,6 +41,15 @@ class TestShippingAddress:
     street_line2 = 'street_line2'
     post_code = 'WC1'
 
+    def test_slot_behaviour(self, shipping_address, recwarn, mro_slots):
+        inst = shipping_address
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.state = 'should give warning', self.state
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
+
     def test_de_json(self, bot):
         json_dict = {
             'country_code': self.country_code,
@@ -47,7 +57,7 @@ class TestShippingAddress:
             'city': self.city,
             'street_line1': self.street_line1,
             'street_line2': self.street_line2,
-            'post_code': self.post_code
+            'post_code': self.post_code,
         }
         shipping_address = ShippingAddress.de_json(json_dict, bot)
 
@@ -70,22 +80,40 @@ class TestShippingAddress:
         assert shipping_address_dict['post_code'] == shipping_address.post_code
 
     def test_equality(self):
-        a = ShippingAddress(self.country_code, self.state, self.city, self.street_line1,
-                            self.street_line2, self.post_code)
-        b = ShippingAddress(self.country_code, self.state, self.city, self.street_line1,
-                            self.street_line2, self.post_code)
-        d = ShippingAddress('', self.state, self.city, self.street_line1,
-                            self.street_line2, self.post_code)
-        d2 = ShippingAddress(self.country_code, '', self.city, self.street_line1,
-                             self.street_line2, self.post_code)
-        d3 = ShippingAddress(self.country_code, self.state, '', self.street_line1,
-                             self.street_line2, self.post_code)
-        d4 = ShippingAddress(self.country_code, self.state, self.city, '',
-                             self.street_line2, self.post_code)
-        d5 = ShippingAddress(self.country_code, self.state, self.city, self.street_line1,
-                             '', self.post_code)
-        d6 = ShippingAddress(self.country_code, self.state, self.city, self.street_line1,
-                             self.street_line2, '')
+        a = ShippingAddress(
+            self.country_code,
+            self.state,
+            self.city,
+            self.street_line1,
+            self.street_line2,
+            self.post_code,
+        )
+        b = ShippingAddress(
+            self.country_code,
+            self.state,
+            self.city,
+            self.street_line1,
+            self.street_line2,
+            self.post_code,
+        )
+        d = ShippingAddress(
+            '', self.state, self.city, self.street_line1, self.street_line2, self.post_code
+        )
+        d2 = ShippingAddress(
+            self.country_code, '', self.city, self.street_line1, self.street_line2, self.post_code
+        )
+        d3 = ShippingAddress(
+            self.country_code, self.state, '', self.street_line1, self.street_line2, self.post_code
+        )
+        d4 = ShippingAddress(
+            self.country_code, self.state, self.city, '', self.street_line2, self.post_code
+        )
+        d5 = ShippingAddress(
+            self.country_code, self.state, self.city, self.street_line1, '', self.post_code
+        )
+        d6 = ShippingAddress(
+            self.country_code, self.state, self.city, self.street_line1, self.street_line2, ''
+        )
 
         assert a == b
         assert hash(a) == hash(b)

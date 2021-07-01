@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,6 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
 import pytest
 
 from telegram import OrderInfo, SuccessfulPayment
@@ -24,13 +23,15 @@ from telegram import OrderInfo, SuccessfulPayment
 
 @pytest.fixture(scope='class')
 def successful_payment():
-    return SuccessfulPayment(TestSuccessfulPayment.currency,
-                             TestSuccessfulPayment.total_amount,
-                             TestSuccessfulPayment.invoice_payload,
-                             TestSuccessfulPayment.telegram_payment_charge_id,
-                             TestSuccessfulPayment.provider_payment_charge_id,
-                             shipping_option_id=TestSuccessfulPayment.shipping_option_id,
-                             order_info=TestSuccessfulPayment.order_info)
+    return SuccessfulPayment(
+        TestSuccessfulPayment.currency,
+        TestSuccessfulPayment.total_amount,
+        TestSuccessfulPayment.invoice_payload,
+        TestSuccessfulPayment.telegram_payment_charge_id,
+        TestSuccessfulPayment.provider_payment_charge_id,
+        shipping_option_id=TestSuccessfulPayment.shipping_option_id,
+        order_info=TestSuccessfulPayment.order_info,
+    )
 
 
 class TestSuccessfulPayment:
@@ -42,6 +43,15 @@ class TestSuccessfulPayment:
     telegram_payment_charge_id = 'telegram_payment_charge_id'
     provider_payment_charge_id = 'provider_payment_charge_id'
 
+    def test_slot_behaviour(self, successful_payment, recwarn, mro_slots):
+        inst = successful_payment
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.currency = 'should give warning', self.currency
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
+
     def test_de_json(self, bot):
         json_dict = {
             'invoice_payload': self.invoice_payload,
@@ -50,7 +60,7 @@ class TestSuccessfulPayment:
             'total_amount': self.total_amount,
             'order_info': self.order_info.to_dict(),
             'telegram_payment_charge_id': self.telegram_payment_charge_id,
-            'provider_payment_charge_id': self.provider_payment_charge_id
+            'provider_payment_charge_id': self.provider_payment_charge_id,
         }
         successful_payment = SuccessfulPayment.de_json(json_dict, bot)
 
@@ -66,26 +76,45 @@ class TestSuccessfulPayment:
 
         assert isinstance(successful_payment_dict, dict)
         assert successful_payment_dict['invoice_payload'] == successful_payment.invoice_payload
-        assert (successful_payment_dict['shipping_option_id']
-                == successful_payment.shipping_option_id)
+        assert (
+            successful_payment_dict['shipping_option_id'] == successful_payment.shipping_option_id
+        )
         assert successful_payment_dict['currency'] == successful_payment.currency
         assert successful_payment_dict['order_info'] == successful_payment.order_info.to_dict()
-        assert (successful_payment_dict['telegram_payment_charge_id']
-                == successful_payment.telegram_payment_charge_id)
-        assert (successful_payment_dict['provider_payment_charge_id']
-                == successful_payment.provider_payment_charge_id)
+        assert (
+            successful_payment_dict['telegram_payment_charge_id']
+            == successful_payment.telegram_payment_charge_id
+        )
+        assert (
+            successful_payment_dict['provider_payment_charge_id']
+            == successful_payment.provider_payment_charge_id
+        )
 
     def test_equality(self):
-        a = SuccessfulPayment(self.currency, self.total_amount, self.invoice_payload,
-                              self.telegram_payment_charge_id,
-                              self.provider_payment_charge_id)
-        b = SuccessfulPayment(self.currency, self.total_amount, self.invoice_payload,
-                              self.telegram_payment_charge_id,
-                              self.provider_payment_charge_id)
-        c = SuccessfulPayment('', 0, '', self.telegram_payment_charge_id,
-                              self.provider_payment_charge_id)
-        d = SuccessfulPayment(self.currency, self.total_amount, self.invoice_payload,
-                              self.telegram_payment_charge_id, '')
+        a = SuccessfulPayment(
+            self.currency,
+            self.total_amount,
+            self.invoice_payload,
+            self.telegram_payment_charge_id,
+            self.provider_payment_charge_id,
+        )
+        b = SuccessfulPayment(
+            self.currency,
+            self.total_amount,
+            self.invoice_payload,
+            self.telegram_payment_charge_id,
+            self.provider_payment_charge_id,
+        )
+        c = SuccessfulPayment(
+            '', 0, '', self.telegram_payment_charge_id, self.provider_payment_charge_id
+        )
+        d = SuccessfulPayment(
+            self.currency,
+            self.total_amount,
+            self.invoice_payload,
+            self.telegram_payment_charge_id,
+            '',
+        )
 
         assert a == b
         assert hash(a) == hash(b)

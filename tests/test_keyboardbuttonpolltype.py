@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2020
+# Copyright (C) 2020-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -28,6 +28,15 @@ def keyboard_button_poll_type():
 
 class TestKeyboardButtonPollType:
     type = Poll.QUIZ
+
+    def test_slot_behaviour(self, keyboard_button_poll_type, recwarn, mro_slots):
+        inst = keyboard_button_poll_type
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.type = 'should give warning', self.type
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
 
     def test_to_dict(self, keyboard_button_poll_type):
         keyboard_button_poll_type_dict = keyboard_button_poll_type.to_dict()

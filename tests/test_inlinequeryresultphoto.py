@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # A library that provides a Python interface to the Telegram Bot API
-# Copyright (C) 2015-2020
+# Copyright (C) 2015-2021
 # Leandro Toledo de Souza <devs@python-telegram-bot.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,16 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
 import pytest
 
-from telegram import (InputTextMessageContent, InlineKeyboardButton, InlineKeyboardMarkup,
-                      InlineQueryResultPhoto, InlineQueryResultVoice)
+from telegram import (
+    InputTextMessageContent,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    InlineQueryResultPhoto,
+    InlineQueryResultVoice,
+    MessageEntity,
+)
 
 
 @pytest.fixture(scope='class')
@@ -35,8 +40,10 @@ def inline_query_result_photo():
         description=TestInlineQueryResultPhoto.description,
         caption=TestInlineQueryResultPhoto.caption,
         parse_mode=TestInlineQueryResultPhoto.parse_mode,
+        caption_entities=TestInlineQueryResultPhoto.caption_entities,
         input_message_content=TestInlineQueryResultPhoto.input_message_content,
-        reply_markup=TestInlineQueryResultPhoto.reply_markup)
+        reply_markup=TestInlineQueryResultPhoto.reply_markup,
+    )
 
 
 class TestInlineQueryResultPhoto:
@@ -50,8 +57,19 @@ class TestInlineQueryResultPhoto:
     description = 'description'
     caption = 'caption'
     parse_mode = 'HTML'
+    caption_entities = [MessageEntity(MessageEntity.ITALIC, 0, 7)]
+
     input_message_content = InputTextMessageContent('input_message_content')
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton('reply_markup')]])
+
+    def test_slot_behaviour(self, inline_query_result_photo, recwarn, mro_slots):
+        inst = inline_query_result_photo
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.id = 'should give warning', self.id_
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
 
     def test_expected_values(self, inline_query_result_photo):
         assert inline_query_result_photo.type == self.type_
@@ -64,8 +82,11 @@ class TestInlineQueryResultPhoto:
         assert inline_query_result_photo.description == self.description
         assert inline_query_result_photo.caption == self.caption
         assert inline_query_result_photo.parse_mode == self.parse_mode
-        assert (inline_query_result_photo.input_message_content.to_dict()
-                == self.input_message_content.to_dict())
+        assert inline_query_result_photo.caption_entities == self.caption_entities
+        assert (
+            inline_query_result_photo.input_message_content.to_dict()
+            == self.input_message_content.to_dict()
+        )
         assert inline_query_result_photo.reply_markup.to_dict() == self.reply_markup.to_dict()
 
     def test_to_dict(self, inline_query_result_photo):
@@ -75,20 +96,31 @@ class TestInlineQueryResultPhoto:
         assert inline_query_result_photo_dict['type'] == inline_query_result_photo.type
         assert inline_query_result_photo_dict['id'] == inline_query_result_photo.id
         assert inline_query_result_photo_dict['photo_url'] == inline_query_result_photo.photo_url
-        assert (inline_query_result_photo_dict['photo_width']
-                == inline_query_result_photo.photo_width)
-        assert (inline_query_result_photo_dict['photo_height']
-                == inline_query_result_photo.photo_height)
+        assert (
+            inline_query_result_photo_dict['photo_width'] == inline_query_result_photo.photo_width
+        )
+        assert (
+            inline_query_result_photo_dict['photo_height']
+            == inline_query_result_photo.photo_height
+        )
         assert inline_query_result_photo_dict['thumb_url'] == inline_query_result_photo.thumb_url
         assert inline_query_result_photo_dict['title'] == inline_query_result_photo.title
-        assert (inline_query_result_photo_dict['description']
-                == inline_query_result_photo.description)
+        assert (
+            inline_query_result_photo_dict['description'] == inline_query_result_photo.description
+        )
         assert inline_query_result_photo_dict['caption'] == inline_query_result_photo.caption
         assert inline_query_result_photo_dict['parse_mode'] == inline_query_result_photo.parse_mode
-        assert (inline_query_result_photo_dict['input_message_content']
-                == inline_query_result_photo.input_message_content.to_dict())
-        assert (inline_query_result_photo_dict['reply_markup']
-                == inline_query_result_photo.reply_markup.to_dict())
+        assert inline_query_result_photo_dict['caption_entities'] == [
+            ce.to_dict() for ce in inline_query_result_photo.caption_entities
+        ]
+        assert (
+            inline_query_result_photo_dict['input_message_content']
+            == inline_query_result_photo.input_message_content.to_dict()
+        )
+        assert (
+            inline_query_result_photo_dict['reply_markup']
+            == inline_query_result_photo.reply_markup.to_dict()
+        )
 
     def test_equality(self):
         a = InlineQueryResultPhoto(self.id_, self.photo_url, self.thumb_url)
